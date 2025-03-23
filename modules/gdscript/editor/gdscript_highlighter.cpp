@@ -62,6 +62,8 @@ Dictionary GDScriptSyntaxHighlighter::_get_line_syntax_highlighting_impl(int p_l
 	bool is_bin_notation = false;
 	bool in_member_variable = false;
 	bool in_lambda = false;
+	bool in_for_loop_header = false;
+	bool is_after_for_keyword_in = false;
 
 	bool in_function_name = false; // Any call.
 	bool in_function_declaration = false; // Only declaration.
@@ -468,8 +470,14 @@ Dictionary GDScriptSyntaxHighlighter::_get_line_syntax_highlighting_impl(int p_l
 					if (prev_text == GDScriptTokenizer::get_token_name(GDScriptTokenizer::Token::FUNC)) {
 						in_function_declaration = true;
 					}
-				} else if (prev_text == GDScriptTokenizer::get_token_name(GDScriptTokenizer::Token::VAR) || prev_text == GDScriptTokenizer::get_token_name(GDScriptTokenizer::Token::FOR) || prev_text == GDScriptTokenizer::get_token_name(GDScriptTokenizer::Token::CONST)) {
+				} else if (prev_text == GDScriptTokenizer::get_token_name(GDScriptTokenizer::Token::VAR) || prev_text == GDScriptTokenizer::get_token_name(GDScriptTokenizer::Token::CONST)) {
 					in_var_const_declaration = true;
+				}
+				else if (prev_text == GDScriptTokenizer::get_token_name(GDScriptTokenizer::Token::FOR)) {
+					in_for_loop_header = true;
+				}
+				else if (in_for_loop_header && prev_text == GDScriptTokenizer::get_token_name(GDScriptTokenizer::Token::IN)) {
+					is_after_for_keyword_in = true;
 				}
 
 				// Check for lambda.
@@ -551,7 +559,7 @@ Dictionary GDScriptSyntaxHighlighter::_get_line_syntax_highlighting_impl(int p_l
 					expect_type = true;
 					in_type_params = 0;
 				}
-				if ((is_after_var_const_declaration || (in_declaration_params == 1 && in_declaration_param_dicts == 0)) && str[j] == ':') {
+				if (((in_for_loop_header && !is_after_for_keyword_in) || is_after_var_const_declaration || (in_declaration_params == 1 && in_declaration_param_dicts == 0)) && str[j] == ':') {
 					expect_type = true;
 					in_type_params = 0;
 				}
