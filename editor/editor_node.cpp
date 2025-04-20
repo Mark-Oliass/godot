@@ -69,7 +69,9 @@
 #include "scene/theme/theme_db.h"
 #include "servers/display_server.h"
 #include "servers/navigation_server_2d.h"
+#ifndef NAVIGATION_3D_DISABLED
 #include "servers/navigation_server_3d.h"
+#endif // NAVIGATION_3D_DISABLED
 #include "servers/rendering_server.h"
 
 #include "editor/audio_stream_preview.h"
@@ -507,6 +509,7 @@ void EditorNode::_update_from_settings() {
 	NavigationServer2D::get_singleton()->set_debug_navigation_enable_edge_lines(GLOBAL_GET("debug/shapes/navigation/2d/enable_edge_lines"));
 	NavigationServer2D::get_singleton()->set_debug_navigation_enable_geometry_face_random_color(GLOBAL_GET("debug/shapes/navigation/2d/enable_geometry_face_random_color"));
 
+#ifndef NAVIGATION_3D_DISABLED
 	NavigationServer3D::get_singleton()->set_debug_navigation_edge_connection_color(GLOBAL_GET("debug/shapes/navigation/3d/edge_connection_color"));
 	NavigationServer3D::get_singleton()->set_debug_navigation_geometry_edge_color(GLOBAL_GET("debug/shapes/navigation/3d/geometry_edge_color"));
 	NavigationServer3D::get_singleton()->set_debug_navigation_geometry_face_color(GLOBAL_GET("debug/shapes/navigation/3d/geometry_face_color"));
@@ -517,6 +520,7 @@ void EditorNode::_update_from_settings() {
 	NavigationServer3D::get_singleton()->set_debug_navigation_enable_edge_lines(GLOBAL_GET("debug/shapes/navigation/3d/enable_edge_lines"));
 	NavigationServer3D::get_singleton()->set_debug_navigation_enable_edge_lines_xray(GLOBAL_GET("debug/shapes/navigation/3d/enable_edge_lines_xray"));
 	NavigationServer3D::get_singleton()->set_debug_navigation_enable_geometry_face_random_color(GLOBAL_GET("debug/shapes/navigation/3d/enable_geometry_face_random_color"));
+#endif // NAVIGATION_3D_DISABLED
 #endif // DEBUG_ENABLED
 }
 
@@ -7113,12 +7117,14 @@ EditorNode::EditorNode() {
 
 		AudioServer::get_singleton()->set_enable_tagging_used_audio_streams(true);
 
+#ifndef NAVIGATION_3D_DISABLED
 		// No navigation by default if in editor.
 		if (NavigationServer3D::get_singleton()->get_debug_enabled()) {
 			NavigationServer3D::get_singleton()->set_active(true);
 		} else {
 			NavigationServer3D::get_singleton()->set_active(false);
 		}
+#endif // NAVIGATION_3D_DISABLED
 
 		// No physics by default if in editor.
 #ifndef PHYSICS_3D_DISABLED
