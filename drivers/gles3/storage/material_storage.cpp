@@ -35,7 +35,6 @@
 #include "config.h"
 #include "material_storage.h"
 #include "particles_storage.h"
-#include "scene/resources/material.h"
 #include "texture_storage.h"
 
 #include "drivers/gles3/rasterizer_canvas_gles3.h"
@@ -1369,8 +1368,7 @@ MaterialStorage::MaterialStorage() {
 
 		actions.render_mode_defines["sss_mode_skin"] = "#define SSS_MODE_SKIN\n";
 
-		actions.render_mode_defines["specular_schlick_ggx"] = "#define SPECULAR_SCHLICK_GGX\n";
-		actions.render_mode_defines["specular_multiscattering_ggx"] = "#define SPECULAR_MULTISCATTERING_GGX\n";
+		actions.render_mode_defines["specular_ggx"] = "#define SPECULAR_GGX\n";
 		actions.render_mode_defines["specular_toon"] = "#define SPECULAR_TOON\n";
 		actions.render_mode_defines["specular_disabled"] = "#define SPECULAR_DISABLED\n";
 		actions.render_mode_defines["shadows_disabled"] = "#define SHADOWS_DISABLED\n";
@@ -2931,7 +2929,6 @@ void SceneShaderData::set_code(const String &p_code) {
 	int alpha_antialiasing_modei = ALPHA_ANTIALIASING_OFF;
 	int cull_modei = RS::CULL_MODE_BACK;
 	int depth_drawi = DEPTH_DRAW_OPAQUE;
-	int specular_mode = BaseMaterial3D::SPECULAR_SCHLICK_GGX;
 
 	ShaderCompiler::IdentifierActions actions;
 	actions.entry_point_stages["vertex"] = ShaderCompiler::STAGE_VERTEX;
@@ -2956,8 +2953,6 @@ void SceneShaderData::set_code(const String &p_code) {
 	actions.render_mode_values["cull_disabled"] = Pair<int *, int>(&cull_modei, RS::CULL_MODE_DISABLED);
 	actions.render_mode_values["cull_front"] = Pair<int *, int>(&cull_modei, RS::CULL_MODE_FRONT);
 	actions.render_mode_values["cull_back"] = Pair<int *, int>(&cull_modei, RS::CULL_MODE_BACK);
-
-	actions.render_mode_values["specular_multiscattering_ggx"] = Pair<int *, int>(&specular_mode, BaseMaterial3D::SPECULAR_MULTISCATTERING_GGX);
 
 	actions.render_mode_flags["unshaded"] = &unshaded;
 	actions.render_mode_flags["wireframe"] = &wireframe;
@@ -3051,10 +3046,6 @@ void SceneShaderData::set_code(const String &p_code) {
 
 	if (uses_normal_texture) {
 		WARN_PRINT_ONCE_ED("Reading from the normal-roughness texture is only available when using the Forward+ or Mobile renderers.");
-	}
-
-	if (specular_mode == BaseMaterial3D::SPECULAR_MULTISCATTERING_GGX) {
-		WARN_PRINT_ONCE_ED("MultiscatterGGX is only available when using the Forward+ renderer.");
 	}
 #endif
 
