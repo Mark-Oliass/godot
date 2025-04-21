@@ -92,12 +92,26 @@ bool ViewPanner::gui_input(const Ref<InputEvent> &p_event, Rect2 p_canvas_rect) 
 			return false;
 		}
 
+		bool is_zoom_drag_event = mb->get_button_index() == MouseButton::MIDDLE && mb->is_ctrl_pressed();
+
+		if (is_zoom_drag_event) {
+			is_dragging = false;
+			if (mb->is_pressed()) {
+				is_zoom_dragging = true;
+			} else {
+				is_zoom_dragging = false;
+			}
+			return true;
+		}
+		is_zoom_dragging = false;
+
 		bool is_drag_event = mb->get_button_index() == MouseButton::MIDDLE ||
 				(enable_rmb && mb->get_button_index() == MouseButton::RIGHT) ||
 				(!simple_panning_enabled && mb->get_button_index() == MouseButton::LEFT && is_panning()) ||
 				(force_drag && mb->get_button_index() == MouseButton::LEFT);
 
 		if (is_drag_event) {
+			is_zoom_dragging = false;
 			if (mb->is_pressed()) {
 				is_dragging = true;
 			} else {
@@ -105,6 +119,7 @@ bool ViewPanner::gui_input(const Ref<InputEvent> &p_event, Rect2 p_canvas_rect) 
 			}
 			return mb->get_button_index() != MouseButton::LEFT || mb->is_pressed(); // Don't consume LMB release events (it fixes some selection problems).
 		}
+		is_dragging = false;
 	}
 
 	Ref<InputEventMouseMotion> mm = p_event;
@@ -115,6 +130,12 @@ bool ViewPanner::gui_input(const Ref<InputEvent> &p_event, Rect2 p_canvas_rect) 
 			} else {
 				pan_callback.call(mm->get_relative(), p_event);
 			}
+			return true;
+		} else if (is_zoom_dragging) {
+			// Zoom drag with vertical movement for 2D viewport
+			Vector2 drag_distance = mm->get_relative();
+			float zoom_factor = 1.0 + (drag_distance.y * zoom_drag_sensitivity * zoom_drag_sensitivity_factor);
+			zoom_callback.call(zoom_factor, mm->get_position(), p_event);
 			return true;
 		}
 	}
@@ -201,6 +222,11 @@ void ViewPanner::set_scroll_speed(int p_scroll_speed) {
 void ViewPanner::set_scroll_zoom_factor(float p_scroll_zoom_factor) {
 	ERR_FAIL_COND(p_scroll_zoom_factor <= 1.0);
 	scroll_zoom_factor = p_scroll_zoom_factor;
+}
+
+void ViewPanner::set_zoom_drag_sensitivity(float p_zoom_drag_sensitivity) {
+	ERR_FAIL_COND(p_zoom_drag_sensitivity < 0.0f);
+	zoom_drag_sensitivity = p_zoom_drag_sensitivity;
 }
 
 void ViewPanner::set_pan_axis(PanAxis p_pan_axis) {
