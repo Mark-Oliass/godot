@@ -1,31 +1,12 @@
 #!/usr/bin/env python
 from misc.utility.scons_hints import *
 
-import methods
+from text_server_adv_builders import make_icu_data
 
 Import("env")
 Import("env_modules")
 
 env_text_server_adv = env_modules.Clone()
-
-
-def make_icu_data(target, source, env):
-    buffer = methods.get_buffer(str(source[0]))
-    with methods.generated_wrapper(str(target[0])) as file:
-        file.write(f"""\
-/* (C) 2016 and later: Unicode, Inc. and others. */
-/* License & terms of use: https://www.unicode.org/copyright.html */
-
-#include <unicode/utypes.h>
-#include <unicode/udata.h>
-#include <unicode/uversion.h>
-
-extern "C" U_EXPORT const size_t U_ICUDATA_SIZE = {len(buffer)};
-extern "C" U_EXPORT const unsigned char U_ICUDATA_ENTRY_POINT[] = {{
-	{methods.format_buffer(buffer, 1)}
-}};
-""")
-
 
 # Thirdparty source files
 
