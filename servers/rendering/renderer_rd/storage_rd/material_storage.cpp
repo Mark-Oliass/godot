@@ -2419,7 +2419,7 @@ MaterialStorage::Samplers MaterialStorage::samplers_rd_allocate(float p_mipmap_b
 					sampler_state.min_filter = RD::SAMPLER_FILTER_LINEAR;
 					sampler_state.mip_filter = mip_filter;
 					sampler_state.lod_bias = samplers.mipmap_bias;
-					sampler_state.use_anisotropy = anisotropy_max != 1;
+					sampler_state.use_anisotropy = anisotropy_max > (1.0 + CMP_EPSILON);
 					sampler_state.anisotropy_max = anisotropy_max;
 
 				} break;
