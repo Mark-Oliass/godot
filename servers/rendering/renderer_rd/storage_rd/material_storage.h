@@ -261,6 +261,8 @@ private:
 
 	static void _material_uniform_set_erased(void *p_material);
 
+	bool supports_nearest_anisotropic;
+
 public:
 	static MaterialStorage *get_singleton();
 
