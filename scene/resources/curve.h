@@ -183,7 +183,7 @@ class Curve2D : public Resource {
 		real_t ofs = 0.0;
 		Vector2 point;
 	};
-	
+
 	bool closed = false;
 
 	mutable bool baked_cache_dirty = false;
@@ -240,7 +240,7 @@ public:
 	Vector2 sample(int p_index, real_t p_offset) const;
 	Vector2 samplef(real_t p_findex) const;
 	void set_closed(bool p_closed);
-	
+
 	bool is_closed() const;
 
 	void set_bake_interval(real_t p_tolerance);

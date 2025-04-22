@@ -799,9 +799,9 @@ void Curve2D::_remove_point(int p_index) {
 
 void Curve2D::remove_point(int p_index) {
 	_remove_point(p_index);
-        if (closed && points.size() < 2) {
-                set_closed(false);
-        }
+	if (closed && points.size() < 2) {
+		set_closed(false);
+	}
 	notify_property_list_changed();
 }
 
@@ -829,8 +829,8 @@ Vector2 Curve2D::sample(int p_index, const real_t p_offset) const {
 
 	Vector2 p0 = points[p_index].position;
 	Vector2 p1 = p0 + points[p_index].out;
-	Vector2 p3,p2;
-	if (!closed || p_index < pc -1 ) {
+	Vector2 p3, p2;
+	if (!closed || p_index < pc - 1) {
 		p3 = points[p_index + 1].position;
 		p2 = p3 + points[p_index + 1].in;
 	} else {
@@ -946,7 +946,7 @@ void Curve2D::_bake() const {
 		Vector<RBMap<real_t, Vector2>> midpoints = _tessellate_even_length(10, bake_interval);
 
 		const int num_intervals = closed ? points.size() : points.size() - 1;
-		
+
 		int pc = 1;
 		for (int i = 0; i < num_intervals; i++) {
 			pc++;
@@ -969,8 +969,7 @@ void Curve2D::_bake() const {
 			for (const KeyValue<real_t, Vector2> &E : midpoints[i]) {
 				pidx++;
 				bpw[pidx] = E.value;
-				if (!closed || i < num_intervals -1) {
-
+				if (!closed || i < num_intervals - 1) {
 					bfw[pidx] = _calculate_tangent(points[i].position, points[i].position + points[i].out, points[i + 1].position + points[i + 1].in, points[i + 1].position, E.key);
 				} else {
 					bfw[pidx] = _calculate_tangent(points[i].position, points[i].position + points[i].out, points[0].position + points[0].in, points[0].position, E.key);
@@ -978,13 +977,12 @@ void Curve2D::_bake() const {
 			}
 
 			pidx++;
-			if (!closed || i < num_intervals -1) {
+			if (!closed || i < num_intervals - 1) {
 				bpw[pidx] = points[i + 1].position;
 				bfw[pidx] = _calculate_tangent(points[i].position, points[i].position + points[i].out, points[i + 1].position + points[i + 1].in, points[i + 1].position, 1.0);
 			} else {
 				bpw[pidx] = points[0].position;
 				bfw[pidx] = _calculate_tangent(points[i].position, points[i].position + points[i].out, points[0].position + points[0].in, points[0].position, 1.0);
-
 			}
 		}
 
@@ -1146,19 +1144,18 @@ PackedVector2Array Curve2D::get_baked_points() const {
 }
 
 void Curve2D::set_closed(bool p_closed) {
-        if (closed == p_closed) {
-                return;
-        }
+	if (closed == p_closed) {
+		return;
+	}
 
-        closed = p_closed;
-        mark_dirty();
-        notify_property_list_changed();
+	closed = p_closed;
+	mark_dirty();
+	notify_property_list_changed();
 }
 
 bool Curve2D::is_closed() const {
-        return closed;
+	return closed;
 }
-
 
 void Curve2D::set_bake_interval(real_t p_tolerance) {
 	bake_interval = p_tolerance;
@@ -1317,7 +1314,6 @@ PackedVector2Array Curve2D::tessellate(int p_max_stages, real_t p_tolerance) con
 			_bake_segment2d(midpoints.write[i], 0, 1, points[i].position, points[i].out, points[i + 1].position, points[i + 1].in, 0, p_max_stages, p_tolerance);
 		} else {
 			_bake_segment2d(midpoints.write[i], 0, 1, points[i].position, points[i].out, points[0].position, points[0].in, 0, p_max_stages, p_tolerance);
-
 		}
 		pc++;
 		pc += midpoints[i].size();
@@ -1357,7 +1353,6 @@ Vector<RBMap<real_t, Vector2>> Curve2D::_tessellate_even_length(int p_max_stages
 			_bake_segment2d_even_length(midpoints.write[i], 0, 1, points[i].position, points[i].out, points[i + 1].position, points[i + 1].in, 0, p_max_stages, p_length);
 		} else {
 			_bake_segment2d_even_length(midpoints.write[i], 0, 1, points[i].position, points[i].out, points[0].position, points[0].in, 0, p_max_stages, p_length);
-
 		}
 	}
 	return midpoints;
