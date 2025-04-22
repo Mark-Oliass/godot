@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 from misc.utility.scons_hints import *
 
-import subprocess
-import sys
+import platform_android_builders
 
 from methods import print_warning
 
@@ -86,30 +85,7 @@ if lib_arch_dir != "":
     )
     env_android.CommandNoCache(out_dir + "/libc++_shared.so", stl_lib_path, Copy("$TARGET", "$SOURCE"))
 
-    def generate_apk(target, source, env):
-        gradle_process = []
-
-        if sys.platform.startswith("win"):
-            gradle_process = [
-                "cmd",
-                "/c",
-                "gradlew.bat",
-            ]
-        else:
-            gradle_process = ["./gradlew"]
-
-        gradle_process += [
-            "generateGodotEditor" if env["target"] == "editor" else "generateGodotTemplates",
-            "--quiet",
-        ]
-
-        if env["debug_symbols"]:
-            gradle_process += ["-PdoNotStrip=true"]
-
-        subprocess.run(
-            gradle_process,
-            cwd="platform/android/java",
-        )
-
     if env["generate_apk"]:
-        env_android.AlwaysBuild(env_android.CommandNoCache("generate_apk", lib, env.Run(generate_apk)))
+        env_android.AlwaysBuild(
+            env_android.CommandNoCache("generate_apk", lib, env.Run(platform_android_builders.generate_apk))
+        )
