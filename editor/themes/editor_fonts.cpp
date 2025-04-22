@@ -51,7 +51,7 @@ Ref<FontFile> load_external_font(const String &p_path, TextServer::Hinting p_hin
 	font->set_force_autohinter(p_autohint);
 	font->set_subpixel_positioning(p_font_subpixel_positioning);
 	font->set_disable_embedded_bitmaps(p_font_disable_embedded_bitmaps);
-
+	font->set_font_weight(400);
 	if (r_fallbacks != nullptr) {
 		r_fallbacks->push_back(font);
 	}
@@ -70,7 +70,14 @@ Ref<SystemFont> load_system_font(const PackedStringArray &p_names, TextServer::H
 	font->set_force_autohinter(p_autohint);
 	font->set_subpixel_positioning(p_font_subpixel_positioning);
 	font->set_disable_embedded_bitmaps(p_font_disable_embedded_bitmaps);
-
+	font->set_font_weight(400);
+	Dictionary ftr = font->get_supported_variation_list();
+	if (!ftr.is_empty()) {
+		Ref<FontVariation> font_var;
+		font_var.instantiate();
+		font_var->set_base_font(font);
+		font_var->secure_weight();
+	}
 	if (r_fallbacks != nullptr) {
 		r_fallbacks->push_back(font);
 	}
@@ -89,7 +96,15 @@ Ref<FontFile> load_internal_font(const uint8_t *p_data, size_t p_size, TextServe
 	font->set_force_autohinter(p_autohint);
 	font->set_subpixel_positioning(p_font_subpixel_positioning);
 	font->set_disable_embedded_bitmaps(p_font_disable_embedded_bitmaps);
+	font->set_font_weight(400);
 
+	Dictionary ftr = font->get_supported_variation_list();
+	if (!ftr.is_empty()) {
+		Ref<FontVariation> font_var;
+		font_var.instantiate();
+		font_var->set_base_font(font);
+		font_var->secure_weight();
+	}
 	if (r_fallbacks != nullptr) {
 		r_fallbacks->push_back(font);
 	}
@@ -102,7 +117,6 @@ Ref<FontVariation> make_bold_font(const Ref<Font> &p_font, double p_embolden, Ty
 	font_var.instantiate();
 	font_var->set_base_font(p_font);
 	font_var->set_variation_embolden(p_embolden);
-
 	if (r_fallbacks != nullptr) {
 		r_fallbacks->push_back(font_var);
 	}

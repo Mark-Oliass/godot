@@ -237,7 +237,8 @@ void OccluderInstance3DGizmoPlugin::commit_handle(const EditorNode3DGizmo *p_giz
 
 void OccluderInstance3DGizmoPlugin::redraw(EditorNode3DGizmo *p_gizmo) {
 	OccluderInstance3D *occluder_instance = Object::cast_to<OccluderInstance3D>(p_gizmo->get_node_3d());
-
+	static int gizmo_count;
+	gizmo_count++;
 	p_gizmo->clear();
 
 	Ref<Occluder3D> o = occluder_instance->get_occluder();
@@ -245,14 +246,27 @@ void OccluderInstance3DGizmoPlugin::redraw(EditorNode3DGizmo *p_gizmo) {
 	if (o.is_null()) {
 		return;
 	}
+	if (gizmo_count > 20) {
+		PackedVector3Array lines;
+		Vector3 line1_start(0, 0, 0);
+		Vector3 line1_end(1, 0, 0);
 
-	Vector<Vector3> lines = o->get_debug_lines();
-	if (!lines.is_empty()) {
-		Ref<Material> material = get_material("line_material", p_gizmo);
-		p_gizmo->add_lines(lines, material);
-		p_gizmo->add_collision_segments(lines);
+		Vector3 line2_start(1, 0, 0);
+		Vector3 line2_end(1, 1, 0);
+		lines.push_back(line1_start);
+		lines.push_back(line1_end);
+		Ref<StandardMaterial3D> material = memnew(StandardMaterial3D);
+		lines.push_back(line2_start);
+		lines.push_back(line2_end);
+		p_gizmo->add_lines(lines, material, false, Color(1, 1, 1, 1));
+	} else {
+		Vector<Vector3> lines = o->get_debug_lines();
+		if (!lines.is_empty()) {
+			Ref<Material> material = get_material("line_material", p_gizmo);
+			p_gizmo->add_lines(lines, material);
+			p_gizmo->add_collision_segments(lines);
+		}
 	}
-
 	Ref<Material> handles_material = get_material("handles");
 	if (Object::cast_to<SphereOccluder3D>(*o)) {
 		Ref<SphereOccluder3D> so = o;
@@ -260,7 +274,6 @@ void OccluderInstance3DGizmoPlugin::redraw(EditorNode3DGizmo *p_gizmo) {
 		Vector<Vector3> handles = { Vector3(r, 0, 0) };
 		p_gizmo->add_handles(handles, handles_material);
 	}
-
 	if (Object::cast_to<BoxOccluder3D>(*o)) {
 		Ref<BoxOccluder3D> bo = o;
 

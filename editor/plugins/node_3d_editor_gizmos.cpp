@@ -29,7 +29,7 @@
 /**************************************************************************/
 
 #include "node_3d_editor_gizmos.h"
-
+#include "core/math/vector3.h"
 #include "core/math/geometry_2d.h"
 #include "core/math/geometry_3d.h"
 #include "editor/editor_node.h"
@@ -79,6 +79,8 @@ void EditorNode3DGizmo::redraw() {
 	if (!GDVIRTUAL_CALL(_redraw)) {
 		ERR_FAIL_NULL(gizmo_plugin);
 		gizmo_plugin->redraw(this);
+		Engine::get_singleton()->set_max_fps(0);
+
 	}
 
 	_update_bvh();
@@ -247,6 +249,8 @@ void EditorNode3DGizmo::add_mesh(const Ref<Mesh> &p_mesh, const Ref<Material> &p
 }
 
 void EditorNode3DGizmo::_update_bvh() {
+	static int gizmo_count;
+	gizmo_count++;
 	ERR_FAIL_NULL(spatial_node);
 
 	Transform3D transform = spatial_node->get_global_transform();
@@ -259,13 +263,23 @@ void EditorNode3DGizmo::_update_bvh() {
 		aabb.expand_to(transform.xform(segment_end));
 	}
 
-	if (collision_mesh.is_valid()) {
-		for (const Face3 &face : collision_mesh->get_faces()) {
-			aabb.expand_to(transform.xform(face.vertex[0]));
-			aabb.expand_to(transform.xform(face.vertex[1]));
-			aabb.expand_to(transform.xform(face.vertex[2]));
-		}
-	}
+	//if (collision_mesh.is_valid()) {
+	//	if (gizmo_count > 10) {
+	//		for (int i = 0; i < 10; i++) {
+	//			const Face3 &face = collision_mesh->get_faces()[i];
+	//			aabb.expand_to(transform.xform(face.vertex[0]));
+	//			aabb.expand_to(transform.xform(face.vertex[1]));
+	//			aabb.expand_to(transform.xform(face.vertex[2]));
+	//		}
+	//	} else {
+	//		for (const Face3 &face : collision_mesh->get_faces()) {
+	//			aabb.expand_to(transform.xform(face.vertex[0]));
+	//			aabb.expand_to(transform.xform(face.vertex[1]));
+	//			aabb.expand_to(transform.xform(face.vertex[2]));
+	//		}
+	//	}
+
+	//}
 
 	Node3DEditor::get_singleton()->update_gizmo_bvh_node(
 			bvh_node_id,
@@ -1125,7 +1139,24 @@ bool EditorNode3DGizmoPlugin::is_selectable_when_hidden() const {
 	return ret;
 }
 
-void EditorNode3DGizmoPlugin::redraw(EditorNode3DGizmo *p_gizmo) {
+void EditorNode3DGizmoPlugin::redraw(EditorNode3DGizmo *p_gizmo){
+	static int gizmo_count;
+	gizmo_count++;
+	p_gizmo->clear();
+	//if (gizmo_count > 20) {
+	//PackedVector3Array lines;
+	//Vector3 line1_start(0, 0, 0);
+	//Vector3 line1_end(1, 0, 0); 
+
+	//Vector3 line2_start(1, 0, 0);
+	//Vector3 line2_end(1, 1, 0); 
+	//lines.push_back(line1_start);
+	//lines.push_back(line1_end);
+	//Ref<StandardMaterial3D> material = memnew(StandardMaterial3D);
+	//lines.push_back(line2_start);
+	//lines.push_back(line2_end);
+	//p_gizmo->add_lines(lines, material, false, Color(1, 1, 1, 1));
+	//}
 	GDVIRTUAL_CALL(_redraw, p_gizmo);
 }
 

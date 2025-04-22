@@ -1048,10 +1048,15 @@ void Node3DEditorViewport::_select_region() {
 			if (!clicked_wants_append || found_subgizmos) {
 				if (se->gizmo.is_valid()) {
 					se->gizmo->redraw();
+				} else {
+					se->gizmo->clear();
 				}
 
 				if (old_gizmo != se->gizmo && old_gizmo.is_valid()) {
 					old_gizmo->redraw();
+				}
+				else {
+					old_gizmo->clear();
 				}
 
 				spatial_editor->update_transform_gizmo();
@@ -3746,6 +3751,7 @@ void Node3DEditorViewport::_menu_option(int p_option) {
 
 			spatial_editor->update_transform_gizmo();
 			view_display_menu->get_popup()->set_item_checked(idx, current);
+			Engine::get_singleton()->set_max_fps(0);
 		} break;
 		case VIEW_HALF_RESOLUTION: {
 			int idx = view_display_menu->get_popup()->get_item_index(VIEW_HALF_RESOLUTION);
@@ -4112,6 +4118,7 @@ void Node3DEditorViewport::update_transform_gizmo_view() {
 	}
 
 	bool show_gizmo = spatial_editor->is_gizmo_visible() && !_edit.instant && transform_gizmo_visible && !collision_reposition;
+	/*bool show_transform_gizmo = spatial_editor->is_gizmo_visible() && !_edit.instant && transform_gizmo_visible && !collision_reposition;*/
 	for (int i = 0; i < 3; i++) {
 		Transform3D axis_angle;
 		if (xform.basis.get_column(i).normalized().dot(xform.basis.get_column((i + 1) % 3).normalized()) < 1.0) {
@@ -4142,6 +4149,7 @@ void Node3DEditorViewport::update_transform_gizmo_view() {
 	xform.orthonormalize();
 	xform.basis.scale(scale);
 	RenderingServer::get_singleton()->instance_set_transform(rotate_gizmo_instance[3], xform);
+	RenderingServer::get_singleton()->instance_set_visible(rotate_gizmo_instance[3], spatial_editor->is_gizmo_visible() && !_edit.instant && !collision_reposition && (spatial_editor->get_tool_mode() == Node3DEditor::TOOL_MODE_SELECT || spatial_editor->get_tool_mode() == Node3DEditor::TOOL_MODE_ROTATE));
 	RenderingServer::get_singleton()->instance_set_visible(rotate_gizmo_instance[3], spatial_editor->is_gizmo_visible() && !_edit.instant && transform_gizmo_visible && !collision_reposition && (spatial_editor->get_tool_mode() == Node3DEditor::TOOL_MODE_SELECT || spatial_editor->get_tool_mode() == Node3DEditor::TOOL_MODE_ROTATE));
 }
 

@@ -4453,6 +4453,9 @@ void Animation::_value_track_optimize(int p_idx, real_t p_allowed_velocity_err, 
 void Animation::optimize(real_t p_allowed_velocity_err, real_t p_allowed_angular_err, int p_precision) {
 	real_t precision = Math::pow(0.1, p_precision);
 	for (int i = 0; i < tracks.size(); i++) {
+		if (track_get_interpolation_type(i) == Animation::INTERPOLATION_NEAREST) {
+			continue;
+		}
 		if (track_is_compressed(i)) {
 			continue; //not possible to optimize compressed track
 		}

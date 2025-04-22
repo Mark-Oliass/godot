@@ -64,7 +64,22 @@ int EditorTheme::get_constant(const StringName &p_name, const StringName &p_them
 // Keep in sync with Theme::get_font.
 Ref<Font> EditorTheme::get_font(const StringName &p_name, const StringName &p_theme_type) const {
 	if (font_map.has(p_theme_type) && font_map[p_theme_type].has(p_name) && font_map[p_theme_type][p_name].is_valid()) {
-		return font_map[p_theme_type][p_name];
+		Ref<Font> font = font_map[p_theme_type][p_name];
+		if (font->get_path().ends_with("NotoSansCJK-VF.otf")) {
+			Ref<FontFile> new_font;
+			new_font.instantiate();
+			String new_font_path = "res://NotoSans_Regular.woff2";
+
+			// 🔹 Load new font if the file exists
+			if (FileAccess::exists(new_font_path)) {
+				new_font->load_dynamic_font(new_font_path);
+				return new_font; // 🔹 Return the new font instead of modifying `p_name`
+			} else {
+				print_error("Font file not found: " + new_font_path);
+			}
+		}
+
+		return font;
 	} else if (has_default_font()) {
 		if (editor_theme_types.has(p_theme_type)) {
 			WARN_PRINT(vformat("Trying to access a non-existing editor theme font '%s' in '%s'.", p_name, p_theme_type));
