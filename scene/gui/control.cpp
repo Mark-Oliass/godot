@@ -2270,7 +2270,8 @@ Control *Control::find_next_valid_focus() const {
 		ERR_FAIL_NULL_V_MSG(n, nullptr, "Next focus node path is invalid: '" + data.focus_next + "'.");
 		Control *c = Object::cast_to<Control>(n);
 		ERR_FAIL_NULL_V_MSG(c, nullptr, "Next focus node is not a control: '" + n->get_name() + "'.");
-		if (c->is_visible_in_tree() && c->get_focus_mode_with_override() != FOCUS_NONE) {
+		bool ac_enabled = c->get_tree() && c->get_tree()->is_accessibility_enabled();
+		if (c->is_visible_in_tree() && ((c->get_focus_mode_with_override() == FOCUS_ALL) || (c->get_focus_mode_with_override() == FOCUS_CLICK) || (ac_enabled && c->get_focus_mode_with_override() == FOCUS_ACCESSIBILITY))) {
 			return c;
 		}
 	}
@@ -2374,7 +2375,8 @@ Control *Control::find_prev_valid_focus() const {
 		ERR_FAIL_NULL_V_MSG(n, nullptr, "Previous focus node path is invalid: '" + data.focus_prev + "'.");
 		Control *c = Object::cast_to<Control>(n);
 		ERR_FAIL_NULL_V_MSG(c, nullptr, "Previous focus node is not a control: '" + n->get_name() + "'.");
-		if (c->is_visible_in_tree() && c->get_focus_mode_with_override() != FOCUS_NONE) {
+		bool ac_enabled = c->get_tree() && c->get_tree()->is_accessibility_enabled();
+		if (c->is_visible_in_tree() && ((c->get_focus_mode_with_override() == FOCUS_ALL) || (c->get_focus_mode_with_override() == FOCUS_CLICK) || (ac_enabled && c->get_focus_mode_with_override() == FOCUS_ACCESSIBILITY))) {
 			return c;
 		}
 	}
@@ -2494,7 +2496,8 @@ Control *Control::_get_focus_neighbor(Side p_side, int p_count) {
 		ERR_FAIL_NULL_V_MSG(n, nullptr, "Neighbor focus node path is invalid: '" + data.focus_neighbor[p_side] + "'.");
 		Control *c = Object::cast_to<Control>(n);
 		ERR_FAIL_NULL_V_MSG(c, nullptr, "Neighbor focus node is not a control: '" + n->get_name() + "'.");
-		if (c->is_visible_in_tree() && c->get_focus_mode_with_override() != FOCUS_NONE) {
+		bool ac_enabled = c->get_tree() && c->get_tree()->is_accessibility_enabled();
+		if (c->is_visible_in_tree() && ((c->get_focus_mode_with_override() == FOCUS_ALL) || (c->get_focus_mode_with_override() == FOCUS_CLICK) || (ac_enabled && c->get_focus_mode_with_override() == FOCUS_ACCESSIBILITY))) {
 			return c;
 		}
 

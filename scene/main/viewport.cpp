@@ -1933,7 +1933,8 @@ void Viewport::_gui_input_event(Ref<InputEvent> p_event) {
 				while (ci) {
 					Control *control = Object::cast_to<Control>(ci);
 					if (control) {
-						if (control->get_focus_mode_with_override() != Control::FOCUS_NONE) {
+						bool ac_enabled = control->get_tree() && control->get_tree()->is_accessibility_enabled();
+						if ((control->get_focus_mode_with_override() == Control::FOCUS_ALL) || (control->get_focus_mode_with_override() == Control::FOCUS_CLICK) || (ac_enabled && control->get_focus_mode_with_override() == Control::FOCUS_ACCESSIBILITY)) {
 							// Grabbing unhovered focus can cause issues when mouse is dragged
 							// with another button held down.
 							if (control != gui.key_focus && gui.mouse_over_hierarchy.has(control)) {
