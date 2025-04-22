@@ -1535,6 +1535,7 @@ ProjectManager::ProjectManager() {
 				empty_list_open_assetlib->connect(SceneStringName(pressed), callable_mp(this, &ProjectManager::_open_asset_library_confirmed));
 
 				empty_list_online_warning = memnew(Label);
+				empty_list_online_warning->set_focus_mode(FOCUS_ACCESSIBILITY);
 				empty_list_online_warning->set_horizontal_alignment(HorizontalAlignment::HORIZONTAL_ALIGNMENT_CENTER);
 				empty_list_online_warning->set_custom_minimum_size(Size2(220, 0) * EDSCALE);
 				empty_list_online_warning->set_autowrap_mode(TextServer::AUTOWRAP_WORD);
@@ -1679,6 +1680,7 @@ ProjectManager::ProjectManager() {
 		erase_ask->add_child(erase_ask_vb);
 
 		erase_ask_label = memnew(Label);
+		erase_ask_label->set_focus_mode(FOCUS_ACCESSIBILITY);
 		erase_ask_vb->add_child(erase_ask_label);
 
 		// Comment out for now until we have a better warning system to
@@ -1710,6 +1712,7 @@ ProjectManager::ProjectManager() {
 		ask_update_vb = memnew(VBoxContainer);
 		ask_update_settings->add_child(ask_update_vb);
 		ask_update_label = memnew(Label);
+		ask_update_label->set_focus_mode(FOCUS_ACCESSIBILITY);
 		ask_update_label->set_custom_minimum_size(Size2(300 * EDSCALE, 1));
 		ask_update_label->set_autowrap_mode(TextServer::AUTOWRAP_WORD);
 		ask_update_label->set_v_size_flags(SIZE_EXPAND_FILL);
@@ -1809,6 +1812,7 @@ ProjectManager::ProjectManager() {
 		create_tag_dialog->connect("about_to_popup", callable_mp((Control *)new_tag_name, &Control::grab_focus), CONNECT_DEFERRED);
 
 		tag_error = memnew(Label);
+		tag_error->set_focus_mode(FOCUS_ACCESSIBILITY);
 		tag_vb->add_child(tag_error);
 
 		create_tag_btn = memnew(Button);

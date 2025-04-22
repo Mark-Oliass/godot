@@ -1813,6 +1813,7 @@ FileDialog::FileDialog() {
 	vbox->add_margin_child(ETR("Directories & Files:"), tree, true);
 
 	message = memnew(Label);
+	message->set_focus_mode(Control::FOCUS_ACCESSIBILITY);
 	message->hide();
 	message->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
 	message->set_horizontal_alignment(HORIZONTAL_ALIGNMENT_CENTER);
