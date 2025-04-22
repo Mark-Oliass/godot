@@ -1275,7 +1275,8 @@ MaterialStorage::MaterialStorage() {
 	memset(global_shader_uniforms.buffer_dirty_regions, 0, sizeof(bool) * (1 + (global_shader_uniforms.buffer_size / GlobalShaderUniforms::BUFFER_DIRTY_REGION_SIZE)));
 	global_shader_uniforms.buffer = RD::get_singleton()->storage_buffer_create(sizeof(GlobalShaderUniforms::Value) * global_shader_uniforms.buffer_size);
 
-	is_intel_gpu = RD::get_singleton()->get_device_vendor_name() == "Intel";
+	const String gpu_vendor_name = RD::get_singleton()->get_device_vendor_name();
+	supports_nearest_anisotropic = gpu_vendor_name == "NVIDIA" || gpu_vendor_name == "AMD";
 }
 
 MaterialStorage::~MaterialStorage() {
@@ -2413,7 +2414,7 @@ MaterialStorage::Samplers MaterialStorage::samplers_rd_allocate(float p_mipmap_b
 					sampler_state.min_filter = RD::SAMPLER_FILTER_NEAREST;
 					sampler_state.mip_filter = mip_filter;
 					sampler_state.lod_bias = samplers.mipmap_bias;
-					sampler_state.use_anisotropy = anisotropic_filtering_level != RS::VIEWPORT_ANISOTROPY_DISABLED && !is_intel_gpu;
+					sampler_state.use_anisotropy = anisotropic_filtering_level != RS::VIEWPORT_ANISOTROPY_DISABLED && supports_nearest_anisotropic;
 					sampler_state.anisotropy_max = anisotropy_max;
 				} break;
 				case RS::CANVAS_ITEM_TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC: {

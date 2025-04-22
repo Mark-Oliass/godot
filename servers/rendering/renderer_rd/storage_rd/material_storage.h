@@ -261,8 +261,7 @@ private:
 
 	static void _material_uniform_set_erased(void *p_material);
 
-	// This is needed because Intel GPUs don't support anisotropic filtering with nearest-neighbor
-	bool is_intel_gpu;
+	bool supports_nearest_anisotropic;
 
 public:
 	static MaterialStorage *get_singleton();
