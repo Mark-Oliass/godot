@@ -7097,6 +7097,8 @@ void EditorNode::_touch_actions_panel_mode_changed() {
 #endif
 
 EditorNode::EditorNode() {
+	print_line("Opening editor.");
+
 	DEV_ASSERT(!singleton);
 	singleton = this;
 
