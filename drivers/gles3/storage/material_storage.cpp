@@ -1273,7 +1273,6 @@ MaterialStorage::MaterialStorage() {
 		actions.renames["POINT_COORD"] = "gl_PointCoord";
 		actions.renames["INSTANCE_CUSTOM"] = "instance_custom";
 		actions.renames["SCREEN_UV"] = "screen_uv";
-		actions.renames["REGION_RECT"] = "region_rect";
 		actions.renames["DEPTH"] = "gl_FragDepth";
 		actions.renames["FOG"] = "fog";
 		actions.renames["RADIANCE"] = "custom_radiance";
