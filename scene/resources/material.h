@@ -279,7 +279,7 @@ public:
 	};
 
 	enum SpecularMode {
-		SPECULAR_SCHLICK_GGX,
+		SPECULAR_GGX,
 		SPECULAR_TOON,
 		SPECULAR_DISABLED,
 		SPECULAR_MAX
@@ -549,7 +549,7 @@ private:
 	DepthDrawMode depth_draw_mode = DEPTH_DRAW_OPAQUE_ONLY;
 	CullMode cull_mode = CULL_BACK;
 	bool flags[FLAG_MAX] = {};
-	SpecularMode specular_mode = SPECULAR_SCHLICK_GGX;
+	SpecularMode specular_mode = SPECULAR_GGX;
 	DiffuseMode diffuse_mode = DIFFUSE_BURLEY;
 	BillboardMode billboard_mode;
 	EmissionOperator emission_op = EMISSION_OP_ADD;

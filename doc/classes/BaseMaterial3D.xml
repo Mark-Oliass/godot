@@ -721,8 +721,11 @@
 		<constant name="DIFFUSE_TOON" value="3" enum="DiffuseMode">
 			Uses a hard cut for lighting, with smoothing affected by roughness.
 		</constant>
-		<constant name="SPECULAR_SCHLICK_GGX" value="0" enum="SpecularMode">
+		<constant name="SPECULAR_GGX" value="0" enum="SpecularMode">
 			Default specular blob.
+			[b]Note:[/b] Forward+ uses multiple specular lobes (multiscattering) for more accurate reflections, at a slight performance cost.
+			[b]Warning:[/b] The impact of multiscattering is most noticeable on rough metallic surfaces. For smooth surfaces and non-metal surfaces, the impact likely won’t be noticed.
+			[b]Warning:[/b] Mobile and Compatibility don't support multiple specular lobes; instead, they use a single specular lobe (single scattering).
 		</constant>
 		<constant name="SPECULAR_TOON" value="1" enum="SpecularMode">
 			Toon blob which changes size based on roughness.
