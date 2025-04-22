@@ -2379,6 +2379,9 @@ MaterialStorage::Samplers MaterialStorage::samplers_rd_allocate(float p_mipmap_b
 	RD::SamplerFilter mip_filter = samplers.use_nearest_mipmap_filter ? RD::SAMPLER_FILTER_NEAREST : RD::SAMPLER_FILTER_LINEAR;
 	float anisotropy_max = float(1 << samplers.anisotropic_filtering_level);
 
+	// Intel GPUs don't currently support anisotropic filtering with nearest-neighbor
+	const bool is_intel_gpu = RD::get_singleton()->get_device_vendor_name() == "Intel";
+
 	for (int i = 1; i < RS::CANVAS_ITEM_TEXTURE_FILTER_MAX; i++) {
 		for (int j = 1; j < RS::CANVAS_ITEM_TEXTURE_REPEAT_MAX; j++) {
 			RD::SamplerState sampler_state;
@@ -2411,7 +2414,7 @@ MaterialStorage::Samplers MaterialStorage::samplers_rd_allocate(float p_mipmap_b
 					sampler_state.min_filter = RD::SAMPLER_FILTER_NEAREST;
 					sampler_state.mip_filter = mip_filter;
 					sampler_state.lod_bias = samplers.mipmap_bias;
-					sampler_state.use_anisotropy = !Math::is_equal_approx(anisotropy_max, 1.0f);
+					sampler_state.use_anisotropy = !Math::is_equal_approx(anisotropy_max, 1.0f) && !is_intel_gpu;
 					sampler_state.anisotropy_max = anisotropy_max;
 				} break;
 				case RS::CANVAS_ITEM_TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC: {
