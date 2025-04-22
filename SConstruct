@@ -156,6 +156,7 @@ if profile:
         customs.append(profile + ".py")
 
 opts = Variables(customs, ARGUMENTS)
+opts.__class__.get_arguments = methods.opts_get_arguments
 
 # Target build options
 opts.Add((["platform", "p"], "Target platform (%s)" % "|".join(platform_list), ""))
@@ -371,7 +372,7 @@ for key, value in flag_list.items():
         env[key] = value
 
 # Update the environment to take platform-specific options into account.
-opts.Update(env, {**ARGUMENTS, **env.Dictionary()})
+opts.Update(env, {**ARGUMENTS, **opts.get_arguments(env)})
 
 # Detect modules.
 modules_detected = OrderedDict()
@@ -430,7 +431,9 @@ for name, path in modules_detected.items():
 env.modules_detected = modules_detected
 
 # Update the environment again after all the module options are added.
-opts.Update(env, {**ARGUMENTS, **env.Dictionary()})
+opts.Update(env, {**ARGUMENTS, **opts.get_arguments(env)})
+
+# Generate --help
 Help(opts.GenerateHelpText(env))
 
 
