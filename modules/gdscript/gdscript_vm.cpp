@@ -3246,7 +3246,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			ip += 5;                                                                                                       \
 		} else {                                                                                                           \
 			int jumpto = _code_ptr[ip + 4];                                                                                \
-			GD_ERR_BREAK(jumpto<0 || jumpto> _code_size);                                                                  \
+			GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);                                                               \
 			ip = jumpto;                                                                                                   \
 		}                                                                                                                  \
 	}                                                                                                                      \
@@ -3284,9 +3284,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 #endif
 
 				*counter = Variant();
-
-				Array ref;
-				ref.push_back(*counter);
+				Array ref = { *counter };
 				Variant vref;
 				VariantInternal::initialize(&vref, Variant::ARRAY);
 				*VariantInternal::get_array(&vref) = ref;
@@ -3578,7 +3576,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 		(*idx)++;                                                                                   \
 		if (*idx >= array->size()) {                                                                \
 			int jumpto = _code_ptr[ip + 4];                                                         \
-			GD_ERR_BREAK(jumpto<0 || jumpto> _code_size);                                           \
+			GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);                                        \
 			ip = jumpto;                                                                            \
 		} else {                                                                                    \
 			GET_VARIANT_PTR(iterator, 2);                                                           \
@@ -3619,8 +3617,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				Object *obj = *VariantInternal::get_object(container);
 #endif
 
-				Array ref;
-				ref.push_back(*counter);
+				Array ref = { *counter };
 				Variant vref;
 				VariantInternal::initialize(&vref, Variant::ARRAY);
 				*VariantInternal::get_array(&vref) = ref;

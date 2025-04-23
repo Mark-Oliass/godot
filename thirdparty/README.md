@@ -5,6 +5,18 @@ respective folder names. Use two empty lines to separate categories for
 readability.
 
 
+## accesskit
+
+- Upstream: https://github.com/AccessKit/accesskit-c
+- Version: 0.15.1 (0d1da94a33708041b07c61eb702c67cfa3a5f95b, 2025)
+- License: MIT
+
+Files extracted from upstream source:
+
+- `accesskit.h`
+- `LICENSE-MIT`
+
+
 ## amd-fsr
 
 - Upstream: https://github.com/GPUOpen-Effects/FidelityFX-FSR
@@ -448,7 +460,7 @@ Files generated from upstream source:
 ## jolt_physics
 
 - Upstream: https://github.com/jrouwe/JoltPhysics
-- Version: 5.2.1 (f094082aa2bbfcbebc725dbe8b8f65c7d5152886, 2024)
+- Version: 5.3.0 (0373ec0dd762e4bc2f6acdb08371ee84fa23c6db, 2025)
 - License: MIT
 
 Files extracted from upstream source:
@@ -605,7 +617,7 @@ File extracted from upstream source:
 ## mbedtls
 
 - Upstream: https://github.com/Mbed-TLS/mbedtls
-- Version: 3.6.2 (107ea89daaefb9867ea9121002fbbdf926780e98, 2024)
+- Version: 3.6.3 (22098d41c6620ce07cf8a0134d37302355e1e5ef, 2025)
 - License: Apache 2.0
 
 File extracted from upstream release tarball:
@@ -616,7 +628,7 @@ File extracted from upstream release tarball:
 - From `library/` to `thirdparty/mbedtls/library/`:
   - All `.c` and `.h` files
   - Except `bignum_mod.c`, `block_cipher.c`, `ecp_curves_new.c`, `lmots.c`,
-  `lms.c`
+  `lms.c`, `bignum_core_invasive.h`
 - The `LICENSE` file (edited to keep only the Apache 2.0 variant)
 - Added 2 files `godot_core_mbedtls_platform.c` and `godot_core_mbedtls_config.h`
   providing configuration for light bundling with core
@@ -626,7 +638,6 @@ File extracted from upstream release tarball:
 Patches:
 
 - `0001-msvc-2019-psa-redeclaration.patch` (GH-90535)
-- `0002-pr-9981-defragment-incoming-tls-handshake-messages.patch` (GH-103247)
 
 
 ## meshoptimizer
@@ -853,7 +864,7 @@ Patches:
 ## pcre2
 
 - Upstream: http://www.pcre.org
-- Version: 10.43 (3864abdb713f78831dd12d898ab31bbb0fa630b6, 2024)
+- Version: 10.45 (2dce7761b1831fd3f82a9c2bd5476259d945da4d, 2025)
 - License: BSD-3-Clause
 
 Files extracted from upstream source:
@@ -863,8 +874,8 @@ Files extracted from upstream source:
 - `src/pcre2_jit_match.c`
 - `src/pcre2_jit_misc.c`
 - `src/pcre2_ucptables.c`
-- `src/sljit/`
-- `AUTHORS` and `LICENCE`
+- `deps/sljit/sljit_src`
+- `AUTHORS.md` and `LICENCE.md`
 
 
 ## recastnavigation
@@ -944,7 +955,7 @@ Patches:
 ## thorvg
 
 - Upstream: https://github.com/thorvg/thorvg
-- Version: 0.15.11 (61360cf6db0a05a8dd2ebdcc44d4cbbc315692ec, 2025)
+- Version: 0.15.12 (91bd6f35b94e92abfc1a320632e66cd124943524, 2025)
 - License: MIT
 
 Files extracted from upstream source:
@@ -955,6 +966,7 @@ Files extracted from upstream source:
 Patches:
 
 - `0001-revert-tvglines-bezier-precision.patch` (GH-96658)
+- `0002-png-explicit-variable-scope.patch` (GH-105093)
 
 
 ## tinyexr
@@ -975,7 +987,7 @@ Patches:
 ## ufbx
 
 - Upstream: https://github.com/ufbx/ufbx
-- Version: 0.17.1 (6ca5309972f03625e6990f3084ff4c1cc55a09b6, 2025)
+- Version: 0.18.0 (729ab835444f5f229e5f7cff332692ce6c00415d, 2025)
 - License: MIT
 
 Files extracted from upstream source:

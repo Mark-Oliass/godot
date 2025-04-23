@@ -59,8 +59,6 @@
 #include "editor/editor_paths.h"
 #endif
 
-#include <stdint.h>
-
 ///////////////////////////
 
 GDScriptNativeClass::GDScriptNativeClass(const StringName &p_name) {
@@ -1123,7 +1121,7 @@ Error GDScript::load_source_code(const String &p_path) {
 	w[len] = 0;
 
 	String s;
-	if (s.parse_utf8((const char *)w, len) != OK) {
+	if (s.append_utf8((const char *)w, len) != OK) {
 		ERR_FAIL_V_MSG(ERR_INVALID_DATA, "Script '" + p_path + "' contains invalid unicode (UTF-8), so it was not loaded. Please ensure that scripts are saved in valid UTF-8 unicode.");
 	}
 
@@ -1625,6 +1623,27 @@ void GDScript::clear(ClearData *p_clear_data) {
 	}
 }
 
+void GDScript::cancel_pending_functions(bool warn) {
+	MutexLock lock(GDScriptLanguage::get_singleton()->mutex);
+
+	while (SelfList<GDScriptFunctionState> *E = pending_func_states.first()) {
+		// Order matters since clearing the stack may already cause
+		// the GDScriptFunctionState to be destroyed and thus removed from the list.
+		pending_func_states.remove(E);
+		GDScriptFunctionState *state = E->self();
+#ifdef DEBUG_ENABLED
+		if (warn) {
+			WARN_PRINT("Canceling suspended execution of \"" + state->get_readable_function() + "\" due to a script reload.");
+		}
+#endif
+		ObjectID state_id = state->get_instance_id();
+		state->_clear_connections();
+		if (ObjectDB::get_instance(state_id)) {
+			state->_clear_stack();
+		}
+	}
+}
+
 GDScript::~GDScript() {
 	if (destructing) {
 		return;
@@ -1640,21 +1659,7 @@ GDScript::~GDScript() {
 
 	clear();
 
-	{
-		MutexLock lock(GDScriptLanguage::get_singleton()->mutex);
-
-		while (SelfList<GDScriptFunctionState> *E = pending_func_states.first()) {
-			// Order matters since clearing the stack may already cause
-			// the GDScriptFunctionState to be destroyed and thus removed from the list.
-			pending_func_states.remove(E);
-			GDScriptFunctionState *state = E->self();
-			ObjectID state_id = state->get_instance_id();
-			state->_clear_connections();
-			if (ObjectDB::get_instance(state_id)) {
-				state->_clear_stack();
-			}
-		}
-	}
+	cancel_pending_functions(false);
 
 	{
 		MutexLock lock(GDScriptLanguage::get_singleton()->mutex);
@@ -2249,10 +2254,10 @@ void GDScriptLanguage::init() {
 		_add_global(StaticCString::create(CoreConstants::get_global_constant_name(i)), CoreConstants::get_global_constant_value(i));
 	}
 
-	_add_global(StaticCString::create("PI"), Math_PI);
-	_add_global(StaticCString::create("TAU"), Math_TAU);
-	_add_global(StaticCString::create("INF"), INFINITY);
-	_add_global(StaticCString::create("NAN"), NAN);
+	_add_global(StaticCString::create("PI"), Math::PI);
+	_add_global(StaticCString::create("TAU"), Math::TAU);
+	_add_global(StaticCString::create("INF"), Math::INF);
+	_add_global(StaticCString::create("NAN"), Math::NaN);
 
 	//populate native classes
 
@@ -2699,8 +2704,7 @@ void GDScriptLanguage::reload_scripts(const Array &p_scripts, bool p_soft_reload
 }
 
 void GDScriptLanguage::reload_tool_script(const Ref<Script> &p_script, bool p_soft_reload) {
-	Array scripts;
-	scripts.push_back(p_script);
+	Array scripts = { p_script };
 	reload_scripts(scripts, p_soft_reload);
 }
 
@@ -2849,7 +2853,7 @@ String GDScriptLanguage::get_global_class_name(const String &p_path, String *r_b
 		while (subclass) {
 			if (subclass->extends_used) {
 				if (!subclass->extends_path.is_empty()) {
-					if (subclass->extends.size() == 0) {
+					if (subclass->extends.is_empty()) {
 						get_global_class_name(subclass->extends_path, r_base_type);
 						subclass = nullptr;
 						break;

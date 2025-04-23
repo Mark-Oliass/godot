@@ -149,7 +149,31 @@ void Path3DGizmo::set_handle(int p_id, bool p_secondary, Camera3D *p_camera, con
 					local.snapf(snap);
 				}
 
-				if (info.type == HandleType::HANDLE_TYPE_IN) {
+				// Determine if control points should be swapped based on delta movement.
+				// Only run on the next update after an overlap is detected, to get proper delta movement.
+				if (control_points_overlapped) {
+					control_points_overlapped = false;
+					Vector3 delta = local - (info.type == HANDLE_TYPE_IN ? c->get_point_in(idx) : c->get_point_out(idx));
+					Vector3 p0 = c->get_point_position(idx - 1) - base;
+					Vector3 p1 = c->get_point_position(idx + 1) - base;
+					HandleType new_type = Math::abs(delta.angle_to(p0)) < Math::abs(delta.angle_to(p1)) ? HANDLE_TYPE_IN : HANDLE_TYPE_OUT;
+					if (info.type != new_type) {
+						swapped_control_points_idx = idx;
+					}
+				}
+
+				// Detect control points overlap.
+				bool control_points_equal = c->get_point_in(idx).is_equal_approx(c->get_point_out(idx));
+				if (idx > 0 && idx < (c->get_point_count() - 1) && control_points_equal) {
+					control_points_overlapped = true;
+				}
+
+				HandleType control_type = info.type;
+				if (swapped_control_points_idx == idx) {
+					control_type = info.type == HANDLE_TYPE_IN ? HANDLE_TYPE_OUT : HANDLE_TYPE_IN;
+				}
+
+				if (control_type == HandleType::HANDLE_TYPE_IN) {
 					c->set_point_in(idx, local);
 					if (Path3DEditorPlugin::singleton->mirror_angle_enabled()) {
 						c->set_point_out(idx, Path3DEditorPlugin::singleton->mirror_length_enabled() ? -local : (-local.normalized() * orig_out_length));
@@ -190,6 +214,9 @@ void Path3DGizmo::set_handle(int p_id, bool p_secondary, Camera3D *p_camera, con
 }
 
 void Path3DGizmo::commit_handle(int p_id, bool p_secondary, const Variant &p_restore, bool p_cancel) {
+	swapped_control_points_idx = -1;
+	control_points_overlapped = false;
+
 	Ref<Curve3D> c = path->get_curve();
 	if (c.is_null()) {
 		return;
@@ -445,7 +472,7 @@ void Path3DGizmo::redraw() {
 
 					const int n = 36;
 					for (int i = 0; i <= n; i++) {
-						const float a = Math_TAU * i / n;
+						const float a = Math::TAU * i / n;
 						const Vector3 edge = sin(a) * side + cos(a) * up;
 						disk.append(pos + edge * disk_size);
 					}
@@ -593,10 +620,9 @@ EditorPlugin::AfterGUIInput Path3DEditorPlugin::forward_3d_gui_input(Camera3D *p
 						from = gt.xform(from);
 						to = gt.xform(to);
 						if (cdist > 0) {
-							Vector2 s[2];
-							s[0] = viewport->point_to_screen(from);
-							s[1] = viewport->point_to_screen(to);
-							Vector2 inters = Geometry2D::get_closest_point_to_segment(mbpos, s);
+							const Vector2 segment_a = viewport->point_to_screen(from);
+							const Vector2 segment_b = viewport->point_to_screen(to);
+							Vector2 inters = Geometry2D::get_closest_point_to_segment(mbpos, segment_a, segment_b);
 							float d = inters.distance_to(mbpos);
 
 							if (d < 10 && d < closest_d) {
@@ -893,6 +919,7 @@ Path3DEditorPlugin::Path3DEditorPlugin() {
 	curve_edit->set_toggle_mode(true);
 	curve_edit->set_focus_mode(Control::FOCUS_NONE);
 	curve_edit->set_tooltip_text(TTR("Select Points") + "\n" + TTR("Shift+Click: Select multiple Points") + "\n" + keycode_get_string((Key)KeyModifierMask::CMD_OR_CTRL) + TTR("Click: Add Point") + "\n" + TTR("Right Click: Delete Point"));
+	curve_edit->set_accessibility_name(TTRC("Select Points"));
 	toolbar->add_child(curve_edit);
 	curve_edit->connect(SceneStringName(pressed), callable_mp(this, &Path3DEditorPlugin::_mode_changed).bind(MODE_EDIT));
 
@@ -901,6 +928,7 @@ Path3DEditorPlugin::Path3DEditorPlugin() {
 	curve_edit_curve->set_toggle_mode(true);
 	curve_edit_curve->set_focus_mode(Control::FOCUS_NONE);
 	curve_edit_curve->set_tooltip_text(TTR("Select Control Points") + "\n" + TTR("Shift+Click: Drag out Control Points"));
+	curve_edit_curve->set_accessibility_name(TTRC("Select Control Points"));
 	toolbar->add_child(curve_edit_curve);
 	curve_edit_curve->connect(SceneStringName(pressed), callable_mp(this, &Path3DEditorPlugin::_mode_changed).bind(MODE_EDIT_CURVE));
 
@@ -909,6 +937,7 @@ Path3DEditorPlugin::Path3DEditorPlugin() {
 	curve_edit_tilt->set_toggle_mode(true);
 	curve_edit_tilt->set_focus_mode(Control::FOCUS_NONE);
 	curve_edit_tilt->set_tooltip_text(TTR("Select Tilt Handles"));
+	curve_edit_tilt->set_accessibility_name(TTRC("Select Tilt Handles"));
 	toolbar->add_child(curve_edit_tilt);
 	curve_edit_tilt->connect(SceneStringName(pressed), callable_mp(this, &Path3DEditorPlugin::_mode_changed).bind(MODE_EDIT_TILT));
 
@@ -917,6 +946,7 @@ Path3DEditorPlugin::Path3DEditorPlugin() {
 	curve_create->set_toggle_mode(true);
 	curve_create->set_focus_mode(Control::FOCUS_NONE);
 	curve_create->set_tooltip_text(TTR("Add Point (in empty space)") + "\n" + TTR("Split Segment (in curve)"));
+	curve_create->set_accessibility_name(TTRC("Add Point"));
 	toolbar->add_child(curve_create);
 	curve_create->connect(SceneStringName(pressed), callable_mp(this, &Path3DEditorPlugin::_mode_changed).bind(MODE_CREATE));
 
@@ -925,6 +955,7 @@ Path3DEditorPlugin::Path3DEditorPlugin() {
 	curve_del->set_toggle_mode(true);
 	curve_del->set_focus_mode(Control::FOCUS_NONE);
 	curve_del->set_tooltip_text(TTR("Delete Point"));
+	curve_del->set_accessibility_name(TTRC("Delete Point"));
 	toolbar->add_child(curve_del);
 	curve_del->connect(SceneStringName(pressed), callable_mp(this, &Path3DEditorPlugin::_mode_changed).bind(MODE_DELETE));
 
@@ -932,6 +963,7 @@ Path3DEditorPlugin::Path3DEditorPlugin() {
 	curve_closed->set_theme_type_variation(SceneStringName(FlatButton));
 	curve_closed->set_focus_mode(Control::FOCUS_NONE);
 	curve_closed->set_tooltip_text(TTR("Close Curve"));
+	curve_closed->set_accessibility_name(TTRC("Close Curve"));
 	toolbar->add_child(curve_closed);
 	curve_closed->connect(SceneStringName(pressed), callable_mp(this, &Path3DEditorPlugin::_toggle_closed_curve));
 
@@ -939,6 +971,7 @@ Path3DEditorPlugin::Path3DEditorPlugin() {
 	curve_clear_points->set_theme_type_variation(SceneStringName(FlatButton));
 	curve_clear_points->set_focus_mode(Control::FOCUS_NONE);
 	curve_clear_points->set_tooltip_text(TTR("Clear Points"));
+	curve_clear_points->set_accessibility_name(TTRC("Clear Points"));
 	curve_clear_points->connect(SceneStringName(pressed), callable_mp(this, &Path3DEditorPlugin::_confirm_clear_points));
 	toolbar->add_child(curve_clear_points);
 

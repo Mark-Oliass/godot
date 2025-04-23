@@ -108,10 +108,6 @@ void GameViewDebugger::_session_stopped() {
 	emit_signal(SNAME("session_stopped"));
 }
 
-void GameViewDebugger::set_is_feature_enabled(bool p_enabled) {
-	is_feature_enabled = p_enabled;
-}
-
 void GameViewDebugger::set_suspend(bool p_enabled) {
 	Array message;
 	message.append(p_enabled);
@@ -213,9 +209,18 @@ void GameViewDebugger::setup_session(int p_session_id) {
 	session->connect("stopped", callable_mp(this, &GameViewDebugger::_session_stopped));
 }
 
+void GameViewDebugger::_feature_profile_changed() {
+	Ref<EditorFeatureProfile> profile = EditorFeatureProfileManager::get_singleton()->get_current_profile();
+	is_feature_enabled = profile.is_null() || !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_GAME);
+}
+
 void GameViewDebugger::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("session_started"));
 	ADD_SIGNAL(MethodInfo("session_stopped"));
+}
+
+GameViewDebugger::GameViewDebugger() {
+	EditorFeatureProfileManager::get_singleton()->connect("current_feature_profile_changed", callable_mp(this, &GameViewDebugger::_feature_profile_changed));
 }
 
 ///////
@@ -248,6 +253,7 @@ void GameView::_instance_starting(int p_idx, List<String> &r_arguments) {
 	if (!is_feature_enabled) {
 		return;
 	}
+
 	if (p_idx == 0 && embed_on_play && make_floating_on_play && window_wrapper->is_window_available() && !window_wrapper->get_window_enabled() && _get_embed_available() == EMBED_AVAILABLE) {
 		// Set the Floating Window default title. Always considered in DEBUG mode, same as in Window::set_title.
 		String appname = GLOBAL_GET("application/config/name");
@@ -360,6 +366,9 @@ void GameView::_stop_pressed() {
 void GameView::_embedding_completed() {
 	_attach_script_debugger();
 	_update_ui();
+	if (make_floating_on_play) {
+		get_window()->set_flag(Window::FLAG_ALWAYS_ON_TOP, bool(GLOBAL_GET("display/window/size/always_on_top")));
+	}
 }
 
 void GameView::_embedding_failed() {
@@ -429,6 +438,10 @@ void GameView::_node_type_pressed(int p_option) {
 
 void GameView::_select_mode_pressed(int p_option) {
 	RuntimeNodeSelect::SelectMode mode = (RuntimeNodeSelect::SelectMode)p_option;
+	if (!select_mode_button[mode]->is_visible()) {
+		return;
+	}
+
 	for (int i = 0; i < RuntimeNodeSelect::SELECT_MODE_MAX; i++) {
 		select_mode_button[i]->set_pressed_no_signal(i == mode);
 	}
@@ -723,10 +736,6 @@ void GameView::_notification(int p_what) {
 	}
 }
 
-void GameView::set_is_feature_enabled(bool p_enabled) {
-	is_feature_enabled = p_enabled;
-}
-
 void GameView::set_window_layout(Ref<ConfigFile> p_layout) {
 	floating_window_rect = p_layout->get_value("GameView", "floating_window_rect", Rect2i());
 	floating_window_screen = p_layout->get_value("GameView", "floating_window_screen", -1);
@@ -884,6 +893,19 @@ void GameView::_debugger_breaked(bool p_breaked, bool p_can_debug) {
 	_update_embed_window_size();
 }
 
+void GameView::_feature_profile_changed() {
+	Ref<EditorFeatureProfile> profile = EditorFeatureProfileManager::get_singleton()->get_current_profile();
+	bool is_profile_null = profile.is_null();
+
+	is_feature_enabled = is_profile_null || !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_GAME);
+
+	bool is_3d_enabled = is_profile_null || !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_3D);
+	if (!is_3d_enabled && node_type_button[RuntimeNodeSelect::NODE_TYPE_3D]->is_pressed()) {
+		_node_type_pressed(RuntimeNodeSelect::NODE_TYPE_NONE);
+	}
+	node_type_button[RuntimeNodeSelect::NODE_TYPE_3D]->set_visible(is_3d_enabled);
+}
+
 GameView::GameView(Ref<GameViewDebugger> p_debugger, WindowWrapper *p_wrapper) {
 	singleton = this;
 
@@ -907,12 +929,14 @@ GameView::GameView(Ref<GameViewDebugger> p_debugger, WindowWrapper *p_wrapper) {
 	suspend_button->set_theme_type_variation(SceneStringName(FlatButton));
 	suspend_button->connect(SceneStringName(toggled), callable_mp(this, &GameView::_suspend_button_toggled));
 	suspend_button->set_tooltip_text(TTR("Suspend"));
+	suspend_button->set_accessibility_name(TTRC("Suspend"));
 
 	next_frame_button = memnew(Button);
 	main_menu_hbox->add_child(next_frame_button);
 	next_frame_button->set_theme_type_variation(SceneStringName(FlatButton));
 	next_frame_button->connect(SceneStringName(pressed), callable_mp(*debugger, &GameViewDebugger::next_frame));
 	next_frame_button->set_tooltip_text(TTR("Next Frame"));
+	next_frame_button->set_accessibility_name(TTRC("Next Frame"));
 
 	main_menu_hbox->add_child(memnew(VSeparator));
 
@@ -949,6 +973,7 @@ GameView::GameView(Ref<GameViewDebugger> p_debugger, WindowWrapper *p_wrapper) {
 	hide_selection->set_theme_type_variation(SceneStringName(FlatButton));
 	hide_selection->connect(SceneStringName(toggled), callable_mp(this, &GameView::_hide_selection_toggled));
 	hide_selection->set_tooltip_text(TTR("Toggle Selection Visibility"));
+	hide_selection->set_accessibility_name(TTRC("Selection Visibility"));
 	hide_selection->set_pressed(EditorSettings::get_singleton()->get_project_metadata("game_view", "hide_selection", false));
 
 	main_menu_hbox->add_child(memnew(VSeparator));
@@ -987,6 +1012,7 @@ GameView::GameView(Ref<GameViewDebugger> p_debugger, WindowWrapper *p_wrapper) {
 	camera_override_button->set_toggle_mode(true);
 	camera_override_button->set_theme_type_variation(SceneStringName(FlatButton));
 	camera_override_button->set_tooltip_text(TTR("Override the in-game camera."));
+	camera_override_button->set_accessibility_name(TTRC("Override In-game Camera"));
 	camera_override_button->connect(SceneStringName(toggled), callable_mp(this, &GameView::_camera_override_button_toggled));
 
 	camera_override_menu = memnew(MenuButton);
@@ -995,6 +1021,7 @@ GameView::GameView(Ref<GameViewDebugger> p_debugger, WindowWrapper *p_wrapper) {
 	camera_override_menu->set_theme_type_variation("FlatMenuButton");
 	camera_override_menu->set_h_size_flags(SIZE_SHRINK_END);
 	camera_override_menu->set_tooltip_text(TTR("Camera Override Options"));
+	camera_override_menu->set_accessibility_name(TTRC("Camera Override Options"));
 	_camera_override_menu_id_pressed(EditorSettings::get_singleton()->get_project_metadata("game_view", "camera_override_mode", 0));
 
 	PopupMenu *menu = camera_override_menu->get_popup();
@@ -1014,6 +1041,7 @@ GameView::GameView(Ref<GameViewDebugger> p_debugger, WindowWrapper *p_wrapper) {
 	fixed_size_button->set_toggle_mode(true);
 	fixed_size_button->set_theme_type_variation("FlatButton");
 	fixed_size_button->set_tooltip_text(TTR("Embedded game size is based on project settings.\nThe 'Keep Aspect' mode is used when the Game Workspace is smaller than the desired size."));
+	fixed_size_button->set_accessibility_name(TTRC("Fixed Size"));
 	fixed_size_button->connect(SceneStringName(pressed), callable_mp(this, &GameView::_size_mode_button_pressed).bind(SIZE_MODE_FIXED));
 
 	keep_aspect_button = memnew(Button);
@@ -1021,6 +1049,7 @@ GameView::GameView(Ref<GameViewDebugger> p_debugger, WindowWrapper *p_wrapper) {
 	keep_aspect_button->set_toggle_mode(true);
 	keep_aspect_button->set_theme_type_variation("FlatButton");
 	keep_aspect_button->set_tooltip_text(TTR("Keep the aspect ratio of the embedded game."));
+	keep_aspect_button->set_accessibility_name(TTRC("Keep Aspect Ratio"));
 	keep_aspect_button->connect(SceneStringName(pressed), callable_mp(this, &GameView::_size_mode_button_pressed).bind(SIZE_MODE_KEEP_ASPECT));
 
 	stretch_button = memnew(Button);
@@ -1028,6 +1057,7 @@ GameView::GameView(Ref<GameViewDebugger> p_debugger, WindowWrapper *p_wrapper) {
 	stretch_button->set_toggle_mode(true);
 	stretch_button->set_theme_type_variation("FlatButton");
 	stretch_button->set_tooltip_text(TTR("Embedded game size stretches to fit the Game Workspace."));
+	stretch_button->set_accessibility_name(TTRC("Stretch"));
 	stretch_button->connect(SceneStringName(pressed), callable_mp(this, &GameView::_size_mode_button_pressed).bind(SIZE_MODE_STRETCH));
 
 	embed_options_menu = memnew(MenuButton);
@@ -1036,6 +1066,7 @@ GameView::GameView(Ref<GameViewDebugger> p_debugger, WindowWrapper *p_wrapper) {
 	embed_options_menu->set_theme_type_variation("FlatMenuButton");
 	embed_options_menu->set_h_size_flags(SIZE_SHRINK_END);
 	embed_options_menu->set_tooltip_text(TTR("Embedding Options"));
+	embed_options_menu->set_accessibility_name(TTRC("Embedding Options"));
 
 	menu = embed_options_menu->get_popup();
 	menu->connect(SceneStringName(id_pressed), callable_mp(this, &GameView::_embed_options_menu_menu_id_pressed));
@@ -1090,6 +1121,8 @@ GameView::GameView(Ref<GameViewDebugger> p_debugger, WindowWrapper *p_wrapper) {
 	p_wrapper->connect("window_size_changed", callable_mp(this, &GameView::_update_floating_window_settings));
 
 	EditorDebuggerNode::get_singleton()->connect("breaked", callable_mp(this, &GameView::_debugger_breaked));
+
+	EditorFeatureProfileManager::get_singleton()->connect("current_feature_profile_changed", callable_mp(this, &GameView::_feature_profile_changed));
 }
 
 ///////
@@ -1136,24 +1169,6 @@ void GameViewPlugin::_notification(int p_what) {
 	}
 }
 
-void GameViewPlugin::_feature_profile_changed() {
-	bool is_feature_enabled = true;
-	Ref<EditorFeatureProfile> profile = EditorFeatureProfileManager::get_singleton()->get_current_profile();
-	if (profile.is_valid()) {
-		is_feature_enabled = !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_GAME);
-	}
-
-	if (debugger.is_valid()) {
-		debugger->set_is_feature_enabled(is_feature_enabled);
-	}
-
-#ifndef ANDROID_ENABLED
-	if (game_view) {
-		game_view->set_is_feature_enabled(is_feature_enabled);
-	}
-#endif // ANDROID_ENABLED
-}
-
 void GameViewPlugin::_save_last_editor(const String &p_editor) {
 	if (p_editor != get_plugin_name()) {
 		last_editor = p_editor;
@@ -1196,6 +1211,4 @@ GameViewPlugin::GameViewPlugin() {
 	window_wrapper->hide();
 	window_wrapper->connect("window_visibility_changed", callable_mp(this, &GameViewPlugin::_focus_another_editor).unbind(1));
 #endif // ANDROID_ENABLED
-
-	EditorFeatureProfileManager::get_singleton()->connect("current_feature_profile_changed", callable_mp(this, &GameViewPlugin::_feature_profile_changed));
 }

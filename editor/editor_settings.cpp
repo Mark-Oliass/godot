@@ -77,6 +77,10 @@ bool EditorSettings::_set(const StringName &p_name, const Variant &p_value) {
 			}
 		}
 		emit_signal(SNAME("settings_changed"));
+
+		if (p_name == SNAME("interface/editor/editor_language")) {
+			setup_language();
+		}
 	}
 	return true;
 }
@@ -469,7 +473,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 		if (String(GODOT_VERSION_STATUS) == String("stable")) {
 			default_update_mode = EngineUpdateLabel::UpdateMode::NEWEST_STABLE;
 		}
-		EDITOR_SETTING_BASIC(Variant::INT, PROPERTY_HINT_ENUM, "network/connection/engine_version_update_mode", int(default_update_mode), "Disable Update Checks,Check Newest Preview,Check Newest Stable,Check Newest Patch"); // Uses EngineUpdateLabel::UpdateMode.
+		EDITOR_SETTING_BASIC(Variant::INT, PROPERTY_HINT_ENUM, "network/connection/check_for_updates", int(default_update_mode), "Disable Update Checks,Check Newest Preview,Check Newest Stable,Check Newest Patch"); // Uses EngineUpdateLabel::UpdateMode.
 	}
 
 	EDITOR_SETTING_USAGE(Variant::BOOL, PROPERTY_HINT_NONE, "interface/editor/use_embedded_menu", false, "", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_RESTART_IF_CHANGED | PROPERTY_USAGE_EDITOR_BASIC_SETTING)
@@ -587,6 +591,10 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	EDITOR_SETTING(Variant::BOOL, PROPERTY_HINT_NONE, "interface/touchscreen/increase_scrollbar_touch_area", is_native_touchscreen, "")
 	set_restart_if_changed("interface/touchscreen/increase_scrollbar_touch_area", true);
 
+	// Only available in the Android editor.
+	String touch_actions_panel_hints = "Disabled:0,Embedded Panel:1,Floating Panel:2";
+	EDITOR_SETTING_BASIC(Variant::INT, PROPERTY_HINT_ENUM, "interface/touchscreen/touch_actions_panel", 1, touch_actions_panel_hints)
+
 	// Scene tabs
 	EDITOR_SETTING(Variant::INT, PROPERTY_HINT_ENUM, "interface/scene_tabs/display_close_button", 1, "Never,If Tab Active,Always"); // TabBar::CloseButtonDisplayPolicy
 	_initial_set("interface/scene_tabs/show_thumbnail_on_hover", true);
@@ -653,6 +661,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	_initial_set("docks/scene_tree/auto_expand_to_selected", true);
 	_initial_set("docks/scene_tree/center_node_on_reparent", false);
 	_initial_set("docks/scene_tree/hide_filtered_out_parents", true);
+	_initial_set("docks/scene_tree/accessibility_warnings", false);
 
 	// FileSystem
 	EDITOR_SETTING(Variant::INT, PROPERTY_HINT_RANGE, "docks/filesystem/thumbnail_size", 64, "32,128,16")
@@ -874,7 +883,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	EDITOR_SETTING_BASIC(Variant::INT, PROPERTY_HINT_ENUM, "editors/3d/freelook/freelook_navigation_scheme", 0, "Default,Partially Axis-Locked (id Tech),Fully Axis-Locked (Minecraft)")
 	EDITOR_SETTING(Variant::FLOAT, PROPERTY_HINT_RANGE, "editors/3d/freelook/freelook_sensitivity", 0.25, "0.01,2,0.001")
 	EDITOR_SETTING(Variant::FLOAT, PROPERTY_HINT_RANGE, "editors/3d/freelook/freelook_inertia", 0.0, "0,1,0.001")
-	EDITOR_SETTING_BASIC(Variant::FLOAT, PROPERTY_HINT_RANGE, "editors/3d/freelook/freelook_base_speed", 5.0, "0,10,0.01")
+	EDITOR_SETTING_BASIC(Variant::FLOAT, PROPERTY_HINT_RANGE, "editors/3d/freelook/freelook_base_speed", 5.0, "0,10,0.01,or_greater")
 	EDITOR_SETTING_BASIC(Variant::INT, PROPERTY_HINT_ENUM, "editors/3d/freelook/freelook_activation_modifier", 0, "None,Shift,Alt,Meta,Ctrl")
 	_initial_set("editors/3d/freelook/freelook_speed_zoom_link", false);
 
@@ -1323,9 +1332,9 @@ fail:
 
 void EditorSettings::setup_language() {
 	String lang = get("interface/editor/editor_language");
-	TranslationServer::get_singleton()->set_locale(lang);
 
 	if (lang == "en") {
+		TranslationServer::get_singleton()->set_locale(lang);
 		return; // Default, nothing to do.
 	}
 	// Load editor translation for configured/detected locale.
@@ -1337,6 +1346,8 @@ void EditorSettings::setup_language() {
 
 	// Load extractable translation for projects.
 	load_extractable_translations(lang);
+
+	TranslationServer::get_singleton()->set_locale(lang);
 }
 
 void EditorSettings::setup_network() {

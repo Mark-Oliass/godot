@@ -32,7 +32,7 @@
 
 // Note: _GODOT suffix added to header guard to avoid conflict with ICU header.
 
-#include "core/string/char_utils.h"
+#include "core/string/char_utils.h" // IWYU pragma: export
 #include "core/templates/cowdata.h"
 #include "core/templates/vector.h"
 #include "core/typedefs.h"
@@ -171,10 +171,9 @@ public:
 	_FORCE_INLINE_ CharProxy<char16_t> operator[](int p_index) { return CharProxy<char16_t>(p_index, _cowdata); }
 
 	_FORCE_INLINE_ Char16String() {}
-	_FORCE_INLINE_ Char16String(const Char16String &p_str) { _cowdata._ref(p_str._cowdata); }
-	_FORCE_INLINE_ Char16String(Char16String &&p_str) :
-			_cowdata(std::move(p_str._cowdata)) {}
-	_FORCE_INLINE_ void operator=(const Char16String &p_str) { _cowdata._ref(p_str._cowdata); }
+	_FORCE_INLINE_ Char16String(const Char16String &p_str) = default;
+	_FORCE_INLINE_ Char16String(Char16String &&p_str) = default;
+	_FORCE_INLINE_ void operator=(const Char16String &p_str) { _cowdata = p_str._cowdata; }
 	_FORCE_INLINE_ void operator=(Char16String &&p_str) { _cowdata = std::move(p_str._cowdata); }
 	_FORCE_INLINE_ Char16String(const char16_t *p_cstr) { copy_from(p_cstr); }
 
@@ -218,10 +217,9 @@ public:
 	_FORCE_INLINE_ CharProxy<char> operator[](int p_index) { return CharProxy<char>(p_index, _cowdata); }
 
 	_FORCE_INLINE_ CharString() {}
-	_FORCE_INLINE_ CharString(const CharString &p_str) { _cowdata._ref(p_str._cowdata); }
-	_FORCE_INLINE_ CharString(CharString &&p_str) :
-			_cowdata(std::move(p_str._cowdata)) {}
-	_FORCE_INLINE_ void operator=(const CharString &p_str) { _cowdata._ref(p_str._cowdata); }
+	_FORCE_INLINE_ CharString(const CharString &p_str) = default;
+	_FORCE_INLINE_ CharString(CharString &&p_str) = default;
+	_FORCE_INLINE_ void operator=(const CharString &p_str) { _cowdata = p_str._cowdata; }
 	_FORCE_INLINE_ void operator=(CharString &&p_str) { _cowdata = std::move(p_str._cowdata); }
 	_FORCE_INLINE_ CharString(const char *p_cstr) { copy_from(p_cstr); }
 
@@ -249,37 +247,37 @@ class String {
 	void copy_from_unchecked(const char32_t *p_char, int p_length);
 
 	// NULL-terminated c string copy - automatically parse the string to find the length.
-	void parse_latin1(const char *p_cstr) {
-		parse_latin1(Span(p_cstr, p_cstr ? strlen(p_cstr) : 0));
+	void append_latin1(const char *p_cstr) {
+		append_latin1(Span(p_cstr, p_cstr ? strlen(p_cstr) : 0));
 	}
-	void parse_utf32(const char32_t *p_cstr) {
-		parse_utf32(Span(p_cstr, p_cstr ? strlen(p_cstr) : 0));
+	void append_utf32(const char32_t *p_cstr) {
+		append_utf32(Span(p_cstr, p_cstr ? strlen(p_cstr) : 0));
 	}
 
 	// wchar_t copy_from depends on the platform.
-	void parse_wstring(const Span<wchar_t> &p_cstr) {
+	void append_wstring(const Span<wchar_t> &p_cstr) {
 #ifdef WINDOWS_ENABLED
 		// wchar_t is 16-bit, parse as UTF-16
-		parse_utf16((const char16_t *)p_cstr.ptr(), p_cstr.size());
+		append_utf16((const char16_t *)p_cstr.ptr(), p_cstr.size());
 #else
 		// wchar_t is 32-bit, copy directly
-		parse_utf32((Span<char32_t> &)p_cstr);
+		append_utf32((Span<char32_t> &)p_cstr);
 #endif
 	}
-	void parse_wstring(const wchar_t *p_cstr) {
+	void append_wstring(const wchar_t *p_cstr) {
 #ifdef WINDOWS_ENABLED
 		// wchar_t is 16-bit, parse as UTF-16
-		parse_utf16((const char16_t *)p_cstr);
+		append_utf16((const char16_t *)p_cstr);
 #else
 		// wchar_t is 32-bit, copy directly
-		parse_utf32((const char32_t *)p_cstr);
+		append_utf32((const char32_t *)p_cstr);
 #endif
 	}
 
 	bool _base_is_subsequence_of(const String &p_string, bool case_insensitive) const;
 	int _count(const String &p_string, int p_from, int p_to, bool p_case_insensitive) const;
 	int _count(const char *p_string, int p_from, int p_to, bool p_case_insensitive) const;
-	String _camelcase_to_underscore() const;
+	String _separate_compound_words() const;
 
 public:
 	enum {
@@ -396,6 +394,9 @@ public:
 	String replace_first(const char *p_key, const char *p_with) const;
 	String replace(const String &p_key, const String &p_with) const;
 	String replace(const char *p_key, const char *p_with) const;
+	String replace_char(char32_t p_key, char32_t p_with) const;
+	String replace_chars(const String &p_keys, char32_t p_with) const;
+	String replace_chars(const char *p_keys, char32_t p_with) const;
 	String replacen(const String &p_key, const String &p_with) const;
 	String replacen(const char *p_key, const char *p_with) const;
 	String repeat(int p_count) const;
@@ -424,7 +425,7 @@ public:
 	static String num_uint64(uint64_t p_num, int base = 10, bool capitalize_hex = false);
 	static String chr(char32_t p_char) {
 		String string;
-		string.parse_utf32(Span(&p_char, 1));
+		string.append_utf32(Span(&p_char, 1));
 		return string;
 	}
 	static String md5(const uint8_t *p_md5);
@@ -451,6 +452,7 @@ public:
 	String to_camel_case() const;
 	String to_pascal_case() const;
 	String to_snake_case() const;
+	String to_kebab_case() const;
 
 	String get_with_code_lines() const;
 	int get_slice_count(const String &p_splitter) const;
@@ -497,40 +499,40 @@ public:
 	CharString ascii(bool p_allow_extended = false) const;
 	// Parse an ascii string.
 	// If any character is > 127, an error will be logged, and 0xfffd will be inserted.
-	Error parse_ascii(const Span<char> &p_range);
+	Error append_ascii(const Span<char> &p_range);
 	static String ascii(const Span<char> &p_range) {
 		String s;
-		s.parse_ascii(p_range);
+		s.append_ascii(p_range);
 		return s;
 	}
 	CharString latin1() const { return ascii(true); }
-	void parse_latin1(const Span<char> &p_cstr);
+	void append_latin1(const Span<char> &p_cstr);
 	static String latin1(const Span<char> &p_string) {
 		String string;
-		string.parse_latin1(p_string);
+		string.append_latin1(p_string);
 		return string;
 	}
 
-	CharString utf8() const;
-	Error parse_utf8(const char *p_utf8, int p_len = -1, bool p_skip_cr = false);
-	Error parse_utf8(const Span<char> &p_range, bool p_skip_cr = false) {
-		return parse_utf8(p_range.ptr(), p_range.size(), p_skip_cr);
+	CharString utf8(Vector<uint8_t> *r_ch_length_map = nullptr) const;
+	Error append_utf8(const char *p_utf8, int p_len = -1, bool p_skip_cr = false);
+	Error append_utf8(const Span<char> &p_range, bool p_skip_cr = false) {
+		return append_utf8(p_range.ptr(), p_range.size(), p_skip_cr);
 	}
 	static String utf8(const char *p_utf8, int p_len = -1);
 	static String utf8(const Span<char> &p_range) { return utf8(p_range.ptr(), p_range.size()); }
 
 	Char16String utf16() const;
-	Error parse_utf16(const char16_t *p_utf16, int p_len = -1, bool p_default_little_endian = true);
-	Error parse_utf16(const Span<char16_t> p_range, bool p_skip_cr = false) {
-		return parse_utf16(p_range.ptr(), p_range.size(), p_skip_cr);
+	Error append_utf16(const char16_t *p_utf16, int p_len = -1, bool p_default_little_endian = true);
+	Error append_utf16(const Span<char16_t> p_range, bool p_skip_cr = false) {
+		return append_utf16(p_range.ptr(), p_range.size(), p_skip_cr);
 	}
 	static String utf16(const char16_t *p_utf16, int p_len = -1);
 	static String utf16(const Span<char16_t> &p_range) { return utf16(p_range.ptr(), p_range.size()); }
 
-	void parse_utf32(const Span<char32_t> &p_cstr);
+	void append_utf32(const Span<char32_t> &p_cstr);
 	static String utf32(const Span<char32_t> &p_span) {
 		String string;
-		string.parse_utf32(p_span);
+		string.append_utf32(p_span);
 		return string;
 	}
 
@@ -572,6 +574,7 @@ public:
 	String xml_unescape() const;
 	String uri_encode() const;
 	String uri_decode() const;
+	String uri_file_decode() const;
 	String c_escape() const;
 	String c_escape_multiline() const;
 	String c_unescape() const;
@@ -604,13 +607,12 @@ public:
 	 */
 
 	_FORCE_INLINE_ String() {}
-	_FORCE_INLINE_ String(const String &p_str) { _cowdata._ref(p_str._cowdata); }
-	_FORCE_INLINE_ String(String &&p_str) :
-			_cowdata(std::move(p_str._cowdata)) {}
+	_FORCE_INLINE_ String(const String &p_str) = default;
+	_FORCE_INLINE_ String(String &&p_str) = default;
 #ifdef SIZE_EXTRA
 	_NO_INLINE_ ~String() {}
 #endif
-	_FORCE_INLINE_ void operator=(const String &p_str) { _cowdata._ref(p_str._cowdata); }
+	_FORCE_INLINE_ void operator=(const String &p_str) { _cowdata = p_str._cowdata; }
 	_FORCE_INLINE_ void operator=(String &&p_str) { _cowdata = std::move(p_str._cowdata); }
 
 	Vector<uint8_t> to_ascii_buffer() const;
@@ -618,27 +620,31 @@ public:
 	Vector<uint8_t> to_utf16_buffer() const;
 	Vector<uint8_t> to_utf32_buffer() const;
 	Vector<uint8_t> to_wchar_buffer() const;
+	Vector<uint8_t> to_multibyte_char_buffer(const String &p_encoding = String()) const;
 
 	// Constructors for NULL terminated C strings.
 	String(const char *p_cstr) {
-		parse_latin1(p_cstr);
+		append_latin1(p_cstr);
 	}
 	String(const wchar_t *p_cstr) {
-		parse_wstring(p_cstr);
+		append_wstring(p_cstr);
 	}
 	String(const char32_t *p_cstr) {
-		parse_utf32(p_cstr);
+		append_utf32(p_cstr);
 	}
 
 	// Copy assignment for NULL terminated C strings.
 	void operator=(const char *p_cstr) {
-		parse_latin1(p_cstr);
+		clear();
+		append_latin1(p_cstr);
 	}
 	void operator=(const wchar_t *p_cstr) {
-		parse_wstring(p_cstr);
+		clear();
+		append_wstring(p_cstr);
 	}
 	void operator=(const char32_t *p_cstr) {
-		parse_utf32(p_cstr);
+		clear();
+		append_utf32(p_cstr);
 	}
 };
 
