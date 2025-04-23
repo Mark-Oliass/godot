@@ -2909,6 +2909,35 @@ void FontVariation::reset_state() {
 	Font::reset_state();
 }
 
+void FontVariation::secure_weight() {
+	Ref<FontFile> file;
+	file.instantiate();
+	file->load_dynamic_font("res://NotoSansCJK-VF.otf");
+	// TODO: load font file
+
+	Ref<FontVariation> font_file;
+	font_file.instantiate();
+	font_file->set_base_font(file);
+
+	Dictionary ftr = file->get_supported_variation_list();
+	if (ftr.has(TS->name_to_tag("width"))) {
+		// it's variable font
+		Dictionary ot;
+		ot[TS->name_to_tag("width")] = 1000;
+		font_file->set_variation_opentype(ot);
+	} else {
+		for (int i = 0; i < file->get_face_count(); i++) {
+			file->set_face_index(0, i);
+			int font_weight = file->get_font_weight();
+			// check for weight you want
+			if (font_weight == 1000) { // TODO: it's not necesserely have exact match
+				font_file->set_variation_face_index(i);
+				break;
+			}
+		}
+	}
+}
+
 void FontVariation::set_base_font(const Ref<Font> &p_font) {
 	if (base_font != p_font) {
 		if (base_font.is_valid()) {
